@@ -1,7 +1,11 @@
+%% Run this script to plot from the saved Data. 
+
 close all;
 clear all;
 load SimMultidistanceData.mat
 clc;
+
+addpath('../Fig7-Simulation/Dependencies/');
 
 dummy_node = NodeES([0;0;0], [0;0;1],1,0);
 c = dummy_node.c;

@@ -1,11 +1,13 @@
+%% This script plots the result from 
+
 clear all;
 close all;
 clc;
 
-load('Data3DExperiments/TMech2020/CompactData108to117.mat');
+load('../ExperimentData/CompactData108to117.mat');  %Change the name here to choose a particular set
 
-dataEKF = CompactData(3).summary;
-dataES = CompactData(9).summary;
+dataEKF = CompactData(3).summary;    %Configure the experiment number here for EKF run
+dataES = CompactData(9).summary;     %%Configure the experiment number here for ES run
 time = dataEKF(1).t;
 num_iteration = 200;
 T = 0.5;

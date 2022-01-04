@@ -1,15 +1,29 @@
+%%Run this script to perform a series of simulation runs over a range of
+%%speeds. The run time can take upto 60 mins. The results are saved in a .mat file. 
+% Please run PloMultiSpeeds.m directly to plot the saved data. 
+
 clear all;
 close all;
 clc;
 addpath('~/GoogleDrive/PhD-MSU/Research/AlignmentOpticalCommunication/UnderwaterBidiSTAC/Experiments')
-num_MC = 1000;
+num_MC = 100;
 u = [0,0,0];%[0;0.5;0.5];
 global T;
 T = 0.5;
 global num_iteration;
-num_iteration = 300;
+num_iteration = 200;
 num_sample = num_iteration*1/5;
 global ind;
+%orient_elevator = -[3.3;2.3;0.2];  %define the orientation matrix of the rover.
+%orient_rover = [2.7;1.7;0.3];
+
+%speed_range = [0.002;0.005;0.01;0.02;0.05;0.1;0.2;0.5;1.5;2;3;5;10;20;50;100];
+speed_range_net = 0.0:0.1:1.3;
+speed_range = (1/sqrt(2))*speed_range_net;
+
+scaling_factor = 1;
+pos_rover = scaling_factor*[1.5;-1.37;0.25];
+pos_elevator = scaling_factor*[-0.8;-1.37;0.25];%[0;y;0];
 
 
 dummy_node = NodeES([0;0;0], [0;0;1],1,0);
@@ -17,17 +31,18 @@ dummy_node = NodeES([0;0;0], [0;0;1],1,0);
 %Generating initial conditions for angles
 theta_rover = rand(1,num_MC)*360;
 theta_elevator = rand(1,num_MC)*360;
-InitialConditionAmplitude = 10;
-scaling_range = 0.2*(2:11);
-distances = [];
-for n = 1:length(scaling_range)
-    scaling_factor = scaling_range(n)
-    pos_rover = scaling_factor*[1.5;-1.37;0.25];
-    pos_elevator = scaling_factor*[-0.8;-1.37;0.25];%[0;y;0];
-    d = norm(pos_rover-pos_elevator);
-    distances(n) = d;
+InitialConditionAmplitude = 8;
 
-    for k=1:num_MC    
+
+for n = 1:length(speed_range)
+    speed = speed_range(n); 
+%     del_y = (0.15*0.01/0.7)*speed;
+%     del_theta = (0.14*0.01*pi/(0.7*180*1.7))*speed;   %using d=r theta(where theta is in radian) 
+     del_z = (0.01*0.5)*speed;
+     del_y = (0.01*0.5)*speed;
+    
+    for k=1:num_MC
+        d = norm(pos_rover-pos_elevator);
         initial_beta_rover = InitialConditionAmplitude*cosd(theta_rover(k));
         initial_alpha_rover = InitialConditionAmplitude*sind(theta_rover(k));
         rot_rover = dummy_node.rotz(initial_beta_rover)*dummy_node.rotz(initial_alpha_rover);
@@ -79,6 +94,11 @@ for n = 1:length(scaling_range)
                 dataES{i}.beta(ind) = botES.scan.beta;
                 dataES{i}.alpha(ind) = botES.scan.alpha;
             end
+            elevatorEKF.position = elevatorEKF.position + [0;0;del_z];
+            roverEKF.position = roverEKF.position + [0;del_y;0];
+
+            elevatorES.position = elevatorES.position + [0;0;del_z];
+            roverES.position = roverES.position + [0;del_y;0];
         end
         [yMean_roverEKF,yStd_roverEKF] = roverEKF.history.tracking_performance();
         [yMean_elevatorEKF,yStd_elevatorEKF] = elevatorEKF.history.tracking_performance();
@@ -134,25 +154,25 @@ figure(1)
 ax = gca;
 ax.FontSize = 14; 
 yyaxis left;
-h1EKF = errorbar(distances, yEKF_mean_performance, yEKF_std_performance);
+h1EKF = errorbar(speed_range_net, yEKF_mean_performance, yEKF_std_performance);
 hold on
-h1ES = errorbar(distances, yES_mean_performance, yES_std_performance,'--');
+h1ES = errorbar(speed_range_net, yES_mean_performance, yES_std_performance,'--');
 ylabel('Average Intensity $\mathbf{I}$ (V)', 'interpreter','latex', 'FontSize', 20);
 %ylim([0, 0.7]);
-xlim([0 max(distances)]);
+xlim([0 max(speed_range_net)]);
 yyaxis right
-h2EKF = errorbar(distances, xEKF_mean_performance, xEKF_std_performance);
+h2EKF = errorbar(speed_range_net, xEKF_mean_performance, xEKF_std_performance);
 hold on;
-h2ES = errorbar(distances, xES_mean_performance, xES_std_performance,'--');
+h2ES = errorbar(speed_range_net, xES_mean_performance, xES_std_performance,'--');
 ylabel('Average error $\mathbf{E}$ (degree)', 'interpreter','latex', 'FontSize', 20);
 %ylim([0, max(mean_performanceX) + max(std_performanceX)]);
 
 %set(gca, 'XScale', 'log')   
 %set(gca, 'YScale', 'log')
-xlabel('Distances $\lambda$', 'interpreter','latex', 'FontSize', 20);
+xlabel('Speed factor $\lambda$', 'interpreter','latex', 'FontSize', 20);
 %xlim([0 5]);
-legend([h1EKF, h1ES, h2EKF, h2ES], '$\mathbf{I}$ EKF','$\mathbf{I}$ ES', '$\mathbf{E}$ EKF','$\mathbf{E}$ ES','interpreter','latex', 'FontSize', 18);
+%legend([h1EKF, h1ES, h2EKF, h2ES], '$\mathbf{I}$ EKF','$\mathbf{I}$ ES', '$\mathbf{E}$ EKF','$\mathbf{E} ES$','interpreter','latex', 'FontSize', 18);
 
-save('SimMultidistanceData','distances','yEKF_mean_performance','yEKF_std_performance','xEKF_mean_performance','xEKF_std_performance'...
+save('SimMultiSpeedData.mat','speed_range_net','yEKF_mean_performance','yEKF_std_performance','xEKF_mean_performance','xEKF_std_performance'...
     ,'yES_mean_performance','yES_std_performance','xES_mean_performance','xES_std_performance');
 

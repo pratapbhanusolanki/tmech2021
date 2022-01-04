@@ -1,4 +1,5 @@
-%%
+%% Run this script to plot from the saved Data. 
+
 clear all;
 close all;
 clc;

@@ -1,8 +1,10 @@
+%Run this file to analyze and plot the statistics from the experiment data. 
+
 clear all;
 close all;
 clc;
 
-load('Data3DExperiments/TMech2020/DataSummaryEKFandES.mat');
+load('../ExperimentData/DataSummaryEKFandES.mat');
 n_ekf = 1;
 n_es = 1;
 n_te = 1;

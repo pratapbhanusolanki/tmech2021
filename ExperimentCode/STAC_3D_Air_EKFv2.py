@@ -1,5 +1,6 @@
-#this file contains a common tracking code for both elevator and rover 
+#This file contains a common EKF tracking code for both elevator and rover 
 #It checks variable from file config.npy to figure out its own type
+
 import time
 from datetime import datetime  
 import subprocess
